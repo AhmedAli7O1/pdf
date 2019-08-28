@@ -41,10 +41,11 @@ async function extractPNG(page, viewport) {
 
   const canvasAndContext = canvasFactory.create(viewport.width, viewport.height);
 
+
   const renderContext = {
     canvasContext: canvasAndContext.context,
     viewport: viewport,
-    canvasFactory: canvasFactory,
+    canvasFactory: canvasFactory
   };
 
   await page.render(renderContext).promise;

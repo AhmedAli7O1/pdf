@@ -7,10 +7,14 @@ const { extractPNG } = require('./images');
 const kFBARequired = 0x00000010;
 const kMinHeight = 20;
 const pixelPerGrid = 24;
+const LOGGER = console.log;
 
 
-async function getForms({ filePath, scale = 1 }) {
-  const doc = await pdfjsLib.getDocument(filePath).promise;
+async function getForms({ src, scale = 1, enableLogs = false }) {
+
+  if (!enableLogs) disableLogging();
+
+  const doc = await pdfjsLib.getDocument(src).promise;
 
   const promises = [];
 
@@ -20,7 +24,11 @@ async function getForms({ filePath, scale = 1 }) {
 
   const pages = await Promise.all(promises);
 
-  return mapInputs(pages);
+  const result = mapInputs(pages);
+
+  if (!enableLogs) enableLogging();
+
+  return result;
 }
 
 async function getAnnotations(doc, pageNumber, scale) {
@@ -28,7 +36,7 @@ async function getAnnotations(doc, pageNumber, scale) {
   const inputs = await page.getAnnotations();
   const viewPort = page.getViewport({ scale });
   const image = await extractPNG(page, viewPort);
-  
+
   return { pageNumber, inputs, viewPort, image };
 }
 
@@ -90,10 +98,6 @@ function getPosition(input, viewPort) {
     w: toFormPoint(rect[2] - rect[0]),
     h: toFormPoint(height)
   };
-}
-
-function getFormat() {
-
 }
 
 function getInputType(inputs, inputInfo) {
@@ -158,6 +162,14 @@ function toFormPoint(viewPort) {
 
 function toFixedFloat(fNum) {
   return parseFloat(fNum.toFixed(3));
+}
+
+function disableLogging() {
+  console.log = () => { };
+}
+
+function enableLogging() {
+  console.log = LOGGER;
 }
 
 
