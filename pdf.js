@@ -28,6 +28,7 @@ async function getAnnotations(doc, pageNumber, scale) {
   const inputs = await page.getAnnotations();
   const viewPort = page.getViewport({ scale });
   const image = await extractPNG(page, viewPort);
+  
   return { pageNumber, inputs, viewPort, image };
 }
 
