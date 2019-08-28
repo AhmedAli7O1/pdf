@@ -36,8 +36,14 @@ async function getAnnotations(doc, pageNumber, scale, generateImages) {
   const inputs = await page.getAnnotations();
   const viewPort = page.getViewport({ scale });
 
-  viewPort.width = toFormPoint(viewPort.width);
-  viewPort.height = toFormPoint(viewPort.height);
+  const customViewPort = {
+    scale: viewPort.scale,
+    rotation: viewPort.rotation,
+    offsetX: viewPort.offsetX,
+    offsetY: viewPort.offsetY,
+    width: toFormPoint(viewPort.width),
+    height: toFormPoint(viewPort.height)
+  };
 
   let image; 
 
@@ -45,7 +51,7 @@ async function getAnnotations(doc, pageNumber, scale, generateImages) {
     image = await extractPNG(page, viewPort);
   }
 
-  return { pageNumber, inputs, viewPort, image };
+  return { pageNumber, inputs, viewPort: customViewPort, image };
 }
 
 function mapInputs(pages = []) {
