@@ -1,0 +1,28 @@
+{
+  "name": "@nodearch/pdf",
+  "version": "0.1.0",
+  "description": "nodearch pdf module",
+  "main": "./index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nodearch/pdf.git"
+  },
+  "keywords": [
+    "nodearch",
+    "nodearch-pdf"
+  ],
+  "author": "https://github.com/AhmedAli7O1",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/nodearch/pdf/issues",
+    "email": "bluemax7o1@gmail.com"
+  },
+  "engines": {
+    "node": ">=8.0.0 <*"
+  },
+  "dependencies": {
+    "canvas": "^2.6.0",
+    "pdfjs-dist": "^2.1.266"
+  },
+  "devDependencies": {}
+}
