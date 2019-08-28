@@ -10,7 +10,7 @@ const pixelPerGrid = 24;
 const LOGGER = console.log;
 
 
-async function getForms({ src, scale = 1, enableLogs = false }) {
+async function getForms({ src, scale = 1, enableLogs = false, generateImages = false }) {
 
   if (!enableLogs) disableLogging();
 
@@ -19,7 +19,7 @@ async function getForms({ src, scale = 1, enableLogs = false }) {
   const promises = [];
 
   for (let i = 1; i <= doc.numPages; i++) {
-    promises.push(getAnnotations(doc, i, scale));
+    promises.push(getAnnotations(doc, i, scale, generateImages));
   }
 
   const pages = await Promise.all(promises);
@@ -31,11 +31,19 @@ async function getForms({ src, scale = 1, enableLogs = false }) {
   return result;
 }
 
-async function getAnnotations(doc, pageNumber, scale) {
+async function getAnnotations(doc, pageNumber, scale, generateImages) {
   const page = await doc.getPage(pageNumber);
   const inputs = await page.getAnnotations();
   const viewPort = page.getViewport({ scale });
-  const image = await extractPNG(page, viewPort);
+
+  viewPort.width = toFormPoint(viewPort.width);
+  viewPort.height = toFormPoint(viewPort.height);
+
+  let image; 
+
+  if (generateImages) {
+    image = await extractPNG(page, viewPort);
+  }
 
   return { pageNumber, inputs, viewPort, image };
 }
