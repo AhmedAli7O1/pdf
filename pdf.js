@@ -36,26 +36,18 @@ async function getAnnotations(doc, pageNumber, scale, generateImages) {
   const inputs = await page.getAnnotations();
   const viewPort = page.getViewport({ scale });
 
-  const customViewPort = {
-    scale: viewPort.scale,
-    rotation: viewPort.rotation,
-    offsetX: viewPort.offsetX,
-    offsetY: viewPort.offsetY,
-    width: toFormPoint(viewPort.width),
-    height: toFormPoint(viewPort.height)
-  };
-
   let image; 
 
   if (generateImages) {
     image = await extractPNG(page, viewPort);
   }
 
-  return { pageNumber, inputs, viewPort: customViewPort, image };
+  return { pageNumber, inputs, viewPort, image };
 }
 
 function mapInputs(pages = []) {
   return pages.map(page => {
+    
     page.inputs = page.inputs.map(input => {
 
       const position = getPosition(input, page.viewPort);
@@ -76,14 +68,24 @@ function mapInputs(pages = []) {
           width: position.w,
           height: position.h
         },
-        checked: input.hasAppearance || undefined,
+        checked: getCheckedOption(input),
         options: mapOptions(input.options),
         combo: input.combo,
         multiSelect: input.multiSelect,
         textAlignment: input.textAlignment,
         maxLen: input.maxLen,
+        option: input.exportValue || input.buttonValue
       };
     });
+
+    page.viewPort = {
+      scale: page.viewPort.scale,
+      rotation: page.viewPort.rotation,
+      offsetX: page.viewPort.offsetX,
+      offsetY: page.viewPort.offsetY,
+      width: toFormPoint(page.viewPort.width),
+      height: toFormPoint(page.viewPort.height)
+    };
 
     return page;
   });
@@ -144,6 +146,12 @@ function isRequired(input) {
   }
 
   return attributeMask === 16;
+}
+
+function getCheckedOption(input) {
+  const option = input.exportValue || input.buttonValue;
+  const selected = input.fieldValue;
+  return option === selected;
 }
 
 function mapOptions(options = []) {
