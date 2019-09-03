@@ -1,0 +1,21 @@
+{
+  "all": true,
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "src/**/index.ts",
+    "src/**/*.spec.ts",
+    "src/**/*.metadata.ts"
+  ],
+  "extension": [
+    ".ts"
+  ],
+  "require": [
+    "ts-node/register"
+  ],
+  "sourceMap": true,
+  "instrument": true,
+  "reporter": ["lcov", "text" ],
+  "report-dir": "./coverage"
+}

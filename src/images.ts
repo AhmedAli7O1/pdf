@@ -1,30 +1,27 @@
-'use strict';
+import Canvas from 'canvas';
+import assert from 'assert';
+import {PDFPageProxy, PDFPageViewport} from 'pdfjs-dist';
 
-const Canvas = require('canvas');
-var assert = require('assert');
-
-
-function NodeCanvasFactory() { }
-
-NodeCanvasFactory.prototype = {
-  create: function NodeCanvasFactory_create(width, height) {
+class NodeCanvasFactory {
+  create(width: number, height: number) {
     assert(width > 0 && height > 0, 'Invalid canvas size');
-    var canvas = Canvas.createCanvas(width, height);
-    var context = canvas.getContext('2d');
+    const canvas = Canvas.createCanvas(width, height);
+    const context = canvas.getContext('2d');
+
     return {
       canvas: canvas,
       context: context,
     };
-  },
+  }
 
-  reset: function NodeCanvasFactory_reset(canvasAndContext, width, height) {
+  reset(canvasAndContext: any, width: number, height: number) {
     assert(canvasAndContext.canvas, 'Canvas is not specified');
     assert(width > 0 && height > 0, 'Invalid canvas size');
     canvasAndContext.canvas.width = width;
     canvasAndContext.canvas.height = height;
-  },
+  }
 
-  destroy: function NodeCanvasFactory_destroy(canvasAndContext) {
+  destroy(canvasAndContext: any) {
     assert(canvasAndContext.canvas, 'Canvas is not specified');
 
     // Zeroing the width and height cause Firefox to release graphics
@@ -33,10 +30,10 @@ NodeCanvasFactory.prototype = {
     canvasAndContext.canvas.height = 0;
     canvasAndContext.canvas = null;
     canvasAndContext.context = null;
-  },
-};
+  }
+}
 
-async function extractPNG(page, viewport) {
+export async function extractPNG (page: PDFPageProxy, viewport: PDFPageViewport) {
   const canvasFactory = new NodeCanvasFactory();
 
   const canvasAndContext = canvasFactory.create(viewport.width, viewport.height);
@@ -52,7 +49,3 @@ async function extractPNG(page, viewport) {
 
   return canvasAndContext.canvas.toBuffer();
 }
-
-module.exports = {
-  extractPNG
-};
