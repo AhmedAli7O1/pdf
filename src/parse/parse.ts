@@ -1,25 +1,27 @@
-import {getDocument, PDFDocumentProxy, PDFPageProxy, PDFJSStatic} from 'pdfjs-dist';
-import {pdfPromise} from './utils'
-import {mapAnnotations, IOriginalAnnotation} from "./annotation";
-import {IAnnotation} from "./annotation/annotation.interface";
-import {IPage} from "./page.interface";
-import {Viewport} from "./viewport";
-import {extractPNG} from "./images";
-import {IPageOptions} from "./page-options.interface";
+import { getDocument, PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
+import { pdfPromise } from './utils'
+import { mapAnnotations, IOriginalAnnotation } from "./annotation";
+import { IAnnotation } from "./annotation/annotation.interface";
+import { IPage } from "./page.interface";
+import { Viewport } from "./viewport";
+import { extractPNG } from "./images";
+import { IPageOptions } from "./page-options.interface";
 
 
-export class PDF {
+export class PdfParse {
 
   private logging: boolean;
   private LOGGER = console.log;
 
-  constructor(logging: boolean) {
+  constructor() {
     this.logging = false;
   }
 
-  async getPages(sources: string, pageOptions?: IPageOptions): Promise<IPage[]>;
-  async getPages(sources: Uint8Array, pageOptions?: IPageOptions): Promise<IPage[]>;
-  async getPages(source: any, pageOptions?: IPageOptions): Promise<IPage[]> {
+  async getForms(sources: string, pageOptions?: IPageOptions): Promise<IPage[]>;
+  async getForms(sources: Uint8Array, pageOptions?: IPageOptions): Promise<IPage[]>;
+  async getForms(source: any, pageOptions?: IPageOptions): Promise<IPage[]> {
+
+    if (!this.logging) this.disableLogging();
 
     // set defaults
     pageOptions = pageOptions  || {
@@ -29,13 +31,11 @@ export class PDF {
       }
     };
 
-    if (!this.logging) this.disableLogging();
-
     const doc: PDFDocumentProxy = await getDocument(source).promise;
     const pagesHandlers: PDFPageProxy[] = await this.getPagesHandlers(doc);
     const pages: IPage[] = await this.getPagesInfo(pagesHandlers, pageOptions);
 
-    if (!this.logging) this.enableLogging();
+    if(!this.logging) this.enableLogging();
 
     return pages;
   }

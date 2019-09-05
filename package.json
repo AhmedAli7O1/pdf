@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "canvas": "^2.6.0",
+    "hummus": "^1.0.105",
     "pdfjs-dist": "^2.1.266"
   },
   "devDependencies": {
