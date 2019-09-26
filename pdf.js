@@ -2,44 +2,78 @@
 
 const pdfjsLib = require('pdfjs-dist');
 const { extractPNG } = require('./images');
+const path = require('path');
+const os = require('os');
+const fs = require('fs');
+const util = require('util');
+const { convertPDFPageToPNG } = require('./images2');
+const uuid = require("uuid");
 
+
+const writeFile = util.promisify(fs.writeFile);
+const unlink = util.promisify(fs.unlink);
 
 const kFBARequired = 0x00000010;
 const kMinHeight = 20;
 const pixelPerGrid = 24;
 const LOGGER = console.log;
 
+const tmpDir = path.join(os.tmpdir(), 'tmp-nodearch-pdf');
 
-async function getForms({ src, scale = 1, enableLogs = false, generateImages = false }) {
 
-  if (!enableLogs) disableLogging();
+// creating tmp directory at the bootstrap
+try {
+  fs.lstatSync(tmpDir);
+}
+catch(e) {
+  console.log(`creating tmp directory at ${tmpDir}`);
+  fs.mkdirSync(tmpDir);
+}
 
-  const doc = await pdfjsLib.getDocument(src).promise;
+async function getForms({ src, scale = 1, generateImages = false }) {
+  const filePath = await getPathFromBuffer(src) || src;
+
+  const pdfjsConfig = {
+    verbosity: pdfjsLib.VerbosityLevel.ERRORS
+  };
+
+  if (typeof src !== 'string') pdfjsConfig['data'] = src;
+  else pdfjsConfig['url'] = src;
+
+  const doc = await pdfjsLib.getDocument(pdfjsConfig).promise;
 
   const promises = [];
 
   for (let i = 1; i <= doc.numPages; i++) {
-    promises.push(getAnnotations(doc, i, scale, generateImages));
+    promises.push(getAnnotations(filePath, doc, i, scale, generateImages));
   }
 
   const pages = await Promise.all(promises);
 
-  const result = mapInputs(pages);
+  await unlink(filePath);
 
-  if (!enableLogs) enableLogging();
-
-  return result;
+  return mapInputs(pages);
 }
 
-async function getAnnotations(doc, pageNumber, scale, generateImages) {
+async function getPathFromBuffer(buffer) {
+  if (typeof buffer !== 'string') {
+    const filePath = path.join(tmpDir, uuid.v4());
+    await writeFile(filePath, buffer);
+
+    return filePath;
+  }
+}
+
+async function getAnnotations(filePath, doc, pageNumber, scale, generateImages) {
   const page = await doc.getPage(pageNumber);
   const inputs = await page.getAnnotations();
   const viewPort = page.getViewport({ scale });
 
-  let image; 
+  let image;
 
   if (generateImages) {
-    image = await extractPNG(page, viewPort);
+    image = await convertPDFPageToPNG(filePath, tmpDir, pageNumber - 1);
+    // image = await extractPNG(page, viewPort);
   }
 
   return { pageNumber, inputs, viewPort, image };
@@ -47,7 +81,7 @@ async function getAnnotations(doc, pageNumber, scale, generateImages) {
 
 function mapInputs(pages = []) {
   return pages.map(page => {
-    
+
     page.inputs = page.inputs.map(input => {
 
       const position = getPosition(input, page.viewPort);
@@ -55,7 +89,6 @@ function mapInputs(pages = []) {
       return {
         name: input.fieldName,
         alternativeText: input.alternativeText,
-        format: "text", // date, password, number, text
         type: getInputType(page.inputs, input),
         required: isRequired(input),
         readonly: input.readOnly,
@@ -83,8 +116,8 @@ function mapInputs(pages = []) {
       rotation: page.viewPort.rotation,
       offsetX: page.viewPort.offsetX,
       offsetY: page.viewPort.offsetY,
-      width: toFormPoint(page.viewPort.width),
-      height: toFormPoint(page.viewPort.height)
+      width: page.viewPort.width,
+      height: page.viewPort.height
     };
 
     return page;
@@ -93,26 +126,15 @@ function mapInputs(pages = []) {
 
 function getPosition(input, viewPort) {
   const fieldRect = viewPort.convertToViewportRectangle(input.rect);
-  const rect = normalizeRect(fieldRect);
+  const rect = pdfjsLib.Util.normalizeRect(fieldRect);
 
   let height = rect[3] - rect[1];
-  if (input.fieldType === 'Tx') {
-    if (height > kMinHeight + 2) {
-      rect[1] += 2;
-      height -= 2;
-    }
-  }
-  else if (input.fieldType !== 'Ch') { //checkbox, radio button, and link button
-    rect[1] -= 3;
-  }
-
-  height = (height >= kMinHeight) ? height : kMinHeight;
 
   return {
-    x: toFormPoint(rect[0]),
-    y: toFormPoint(rect[1]),
-    w: toFormPoint(rect[2] - rect[0]),
-    h: toFormPoint(height)
+    x: rect[0],
+    y: rect[1],
+    w: rect[2] - rect[0],
+    h: height
   };
 }
 
@@ -163,27 +185,6 @@ function mapOptions(options = []) {
       };
     });
   }
-}
-
-function normalizeRect(rect) {
-  let r = rect.slice(0); // clone rect
-  if (rect[0] > rect[2]) {
-    r[0] = rect[2];
-    r[2] = rect[0];
-  }
-  if (rect[1] > rect[3]) {
-    r[1] = rect[3];
-    r[3] = rect[1];
-  }
-  return r;
-}
-
-function toFormPoint(viewPort) {
-  return toFixedFloat(viewPort / pixelPerGrid);
-}
-
-function toFixedFloat(fNum) {
-  return parseFloat(fNum.toFixed(3));
 }
 
 function disableLogging() {
