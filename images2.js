@@ -12,7 +12,8 @@ async function convertPDFPageToPNG(pdfPath, tmpDir, pageNumber) {
   const pdfImage = new PDFImage(pdfPath, {
     convertOptions: {
       '-quality': '80',
-      '-density': '300'
+      '-density': '300',
+      '-alpha': 'remove'
     },
     convertExtension: 'jpg',
     outputDirectory: tmpDir
