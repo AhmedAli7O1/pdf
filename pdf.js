@@ -107,7 +107,12 @@ function mapInputs(pages = []) {
         multiSelect: input.multiSelect,
         textAlignment: input.textAlignment,
         maxLen: input.maxLen,
-        option: input.exportValue || input.buttonValue
+        option: input.exportValue || input.buttonValue,
+        borderStyle: input.borderStyle,
+        color: input.color,
+        hasAppearance: input.hasAppearance,
+        defaultAppearance: input.defaultAppearance,
+        multiLine: input.multiLine
       };
     });
 
