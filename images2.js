@@ -7,14 +7,10 @@ const util = require('util');
 const readFile = util.promisify(fs.readFile);
 const unlink = util.promisify(fs.unlink);
 
-async function convertPDFPageToPNG(pdfPath, tmpDir, pageNumber) {
+async function convertPDFPageToPNG(pdfPath, tmpDir, pageNumber, convertOptions) {
 
   const pdfImage = new PDFImage(pdfPath, {
-    convertOptions: {
-      '-quality': '80',
-      '-density': '300',
-      '-alpha': 'remove'
-    },
+    convertOptions,
     convertExtension: 'jpg',
     outputDirectory: tmpDir
   });

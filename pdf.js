@@ -30,7 +30,7 @@ catch(e) {
   fs.mkdirSync(tmpDir);
 }
 
-async function getForms({ src, scale = 1, generateImages = false }) {
+async function getForms({ src, scale = 1, generateImages = false, imageMagic = {} }) {
   const filePath = await getPathFromBuffer(src) || src;
 
   const pdfjsConfig = {
@@ -45,7 +45,7 @@ async function getForms({ src, scale = 1, generateImages = false }) {
   const promises = [];
 
   for (let i = 1; i <= doc.numPages; i++) {
-    promises.push(getAnnotations(filePath, doc, i, scale, generateImages));
+    promises.push(getAnnotations(filePath, doc, i, scale, generateImages, imageMagic));
   }
 
   const pages = await Promise.all(promises);
@@ -64,7 +64,7 @@ async function getPathFromBuffer(buffer) {
   }
 }
 
-async function getAnnotations(filePath, doc, pageNumber, scale, generateImages) {
+async function getAnnotations(filePath, doc, pageNumber, scale, generateImages, imageMagic) {
   const page = await doc.getPage(pageNumber);
   const inputs = await page.getAnnotations();
   const viewPort = page.getViewport({ scale });
@@ -72,7 +72,7 @@ async function getAnnotations(filePath, doc, pageNumber, scale, generateImages) 
   let image;
 
   if (generateImages) {
-    image = await convertPDFPageToPNG(filePath, tmpDir, pageNumber - 1);
+    image = await convertPDFPageToPNG(filePath, tmpDir, pageNumber - 1, imageMagic);
     // image = await extractPNG(page, viewPort);
   }
 
