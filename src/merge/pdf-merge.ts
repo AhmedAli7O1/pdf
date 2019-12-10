@@ -17,9 +17,7 @@ function appendPagesToFile(pdfWriter: any, src: string | Buffer, specificRanges?
 export function mergePdfs(targetPath: string, mergingPdfs: IMergingPdf[]): string {
   const pdfWriter = hummus.createWriter(targetPath);
 
-  mergingPdfs.forEach(mergingPdf => {
-    appendPagesToFile(pdfWriter, mergingPdf.src, mergingPdf.pageRanges);
-  });
+  mergingPdfs.forEach(mergingPdf => appendPagesToFile(pdfWriter, mergingPdf.src, mergingPdf.pageRanges));
 
   pdfWriter.end();
 
