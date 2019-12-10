@@ -10,3 +10,10 @@ export interface IDrawingImage {
   imgPath: string;
   transformation?: ITransformation;
 }
+
+export interface IPageSize {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+}

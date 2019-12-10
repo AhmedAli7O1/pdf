@@ -1,5 +1,5 @@
 const constants = {
-  DEFAULT_MEDIA_BOX_SIZE: [0, 0, 595, 842],
+  DEFAULT_PAGE_SIZE: { top: 0, left: 0, width: 595, height: 842 },
   IS_IMAGE_INDEPENDENT_OF_EXISTING_GRAPHICS_STATE: true
 };
 
