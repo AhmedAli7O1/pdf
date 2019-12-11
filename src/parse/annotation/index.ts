@@ -1,3 +1,3 @@
 export * from './annotation';
-export * from './original-annotation.interface';
+export * from './interfaces';
 export * from './map-annotation';

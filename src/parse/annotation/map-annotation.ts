@@ -1,11 +1,10 @@
-import { PDFPageViewport } from "pdfjs-dist";
-import { IOriginalAnnotation } from "./original-annotation.interface";
-import { IAnnotation } from "./annotation.interface";
-import { RadioButton } from "./radio-button";
-import { CheckBox } from "./check-box";
-import { PushButton } from "./push-button";
-import { TextBox } from "./text-box";
-import { ChoiceBox } from "./choice-box";
+import { PDFPageViewport } from 'pdfjs-dist';
+import { IAnnotation, IOriginalAnnotation } from './interfaces';
+import { RadioButton } from './radio-button';
+import { CheckBox } from './check-box';
+import { PushButton } from './push-button';
+import { TextBox } from './text-box';
+import { ChoiceBox } from './choice-box';
 
 export function mapAnnotations (originalAnnotations: IOriginalAnnotation[], viewport: PDFPageViewport): IAnnotation {
   const annotations: IAnnotation = {

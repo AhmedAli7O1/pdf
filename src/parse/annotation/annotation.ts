@@ -1,10 +1,9 @@
-import {PDFPageViewport} from "pdfjs-dist";
+import {PDFPageViewport} from 'pdfjs-dist';
 import { Size } from './size';
-import { IOriginalAnnotation } from "./original-annotation.interface";
-import {Position} from "./position";
+import { IOriginalAnnotation } from './interfaces';
+import {Position} from './position';
 import { toFormPoint } from '../utils';
-import constants from "../constants";
-
+import constants from '../constants';
 
 export class Annotation {
   name: string;

@@ -1,84 +1,94 @@
+import { promisify } from 'util';
+import { join } from 'path';
+import { tmpdir } from 'os';
+import fs from 'fs';
+import uuid from 'uuid';
+import constants from './constants';
 import { getDocument, PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
-import { pdfPromise } from './utils'
-import { mapAnnotations, IOriginalAnnotation } from "./annotation";
-import { IAnnotation } from "./annotation/annotation.interface";
-import { IPage } from "./page.interface";
-import { Viewport } from "./viewport";
-import { extractPNG } from "./images";
-import { IPageOptions } from "./page-options.interface";
+import { pdfPromise } from './utils';
+import { mapAnnotations, IOriginalAnnotation, IAnnotation } from './annotation';
+import { IPage, IPageOptions } from './interfaces';
+import { Viewport } from './viewport';
+import { convertPDFPageToPNG } from './images2';
 
+const writeFile: Function = promisify(fs.writeFile);
+const tmpDir: string = join(tmpdir(), constants.imageMagicTempDir);
 
-export class PdfParse {
+const logging: boolean = false;
+const LOGGER = console.log;
 
-  private logging: boolean;
-  private LOGGER = console.log;
+try {
+  fs.lstatSync(tmpDir);
+}
+catch (e) {
+  console.log(`creating tmp directory at ${tmpDir}`);
+  fs.mkdirSync(tmpDir);
+}
 
-  constructor() {
-    this.logging = false;
+async function getPathFromBuffer(buffer: Buffer): Promise<string | undefined> {
+  if (typeof buffer !== 'string') {
+    const filePath = join(tmpDir, uuid.v4());
+    await writeFile(filePath, buffer);
+
+    return filePath;
+  }
+}
+async function getPagesHandlers(doc: PDFDocumentProxy): Promise<PDFPageProxy[]> {
+  const pagesPromise: Promise<PDFPageProxy>[] = [];
+
+  for (let i = 1; i <= doc.numPages; i++) {
+    pagesPromise.push(pdfPromise<PDFPageProxy>(doc.getPage(i)));
   }
 
-  async getForms(sources: string, pageOptions?: IPageOptions): Promise<IPage[]>;
-  async getForms(sources: Uint8Array, pageOptions?: IPageOptions): Promise<IPage[]>;
-  async getForms(source: any, pageOptions?: IPageOptions): Promise<IPage[]> {
+  return Promise.all(pagesPromise);
+}
+async function getPagesInfo(filePath: string, pages: PDFPageProxy[], pageOptions: IPageOptions): Promise<IPage[]> {
+  return Promise.all(
+    pages.map(async (page: PDFPageProxy) => {
+      const viewport = page.getViewport({ scale: pageOptions.scale });
+      const originalAnnotations: IOriginalAnnotation[] = <any>await page.getAnnotations();
+      const annotation: IAnnotation = mapAnnotations(originalAnnotations, viewport);
+      const customViewport = new Viewport(viewport);
 
-    if (!this.logging) this.disableLogging();
+      let image;
 
-    // set defaults
-    pageOptions = pageOptions  || {
-      scale: 1,
-      extract: {
-        images: false
+      if (pageOptions.extract.images) {
+
+        const convertOpts = (pageOptions.extract) ? pageOptions.extract.imageMagic : {};
+
+        image = await convertPDFPageToPNG(filePath, tmpDir, page.pageNumber - 1, convertOpts);
       }
-    };
 
-    const doc: PDFDocumentProxy = await getDocument(source).promise;
-    const pagesHandlers: PDFPageProxy[] = await this.getPagesHandlers(doc);
-    const pages: IPage[] = await this.getPagesInfo(pagesHandlers, pageOptions);
+      return {
+        pageNumber: page.pageNumber,
+        viewport: customViewport,
+        annotation,
+        image
+      };
+    })
+  );
+}
+function disableLogging(): void {
+  console.log = () => { };
+}
+function enableLogging(): void {
+  console.log = LOGGER;
+}
 
-    if(!this.logging) this.enableLogging();
+export async function getForms(source: string | Uint8Array, pageOptions?: IPageOptions): Promise<IPage[]>
+export async function getForms(source: string, pageOptions?: IPageOptions): Promise<IPage[]>
+export async function getForms(source: any, pageOptions?: IPageOptions): Promise<IPage[]> {
 
-    return pages;
-  }
+  if (!logging) { disableLogging(); }
 
-  private async getPagesHandlers(doc: PDFDocumentProxy): Promise<PDFPageProxy[]> {
-    const pagesPromise: Promise<PDFPageProxy>[] = [];
+  pageOptions = pageOptions || { scale: 1, extract: { images: false, imageMagic: {} } };
 
-    for (let i = 1; i <= doc.numPages; i++) {
-      pagesPromise.push(pdfPromise<PDFPageProxy>(doc.getPage(i)));
-    }
+  const filePath = await getPathFromBuffer(source) || source;
+  const doc: PDFDocumentProxy = await getDocument(source).promise;
+  const pagesHandlers: PDFPageProxy[] = await getPagesHandlers(doc);
+  const pages: IPage[] = await getPagesInfo(filePath, pagesHandlers, pageOptions);
 
-    return Promise.all(pagesPromise);
-  }
+  if (!logging) { enableLogging(); }
 
-  private async getPagesInfo(pages: PDFPageProxy[], pageOptions: IPageOptions): Promise<IPage[]> {
-    return Promise.all(
-      pages.map(async (page: PDFPageProxy) => {
-        const viewport = page.getViewport({ scale: pageOptions.scale });
-        const originalAnnotations: IOriginalAnnotation[] = <any>await page.getAnnotations();
-        const annotation: IAnnotation = mapAnnotations(originalAnnotations, viewport);
-        const customViewport = new Viewport(viewport);
-
-        let image;
-
-        if (pageOptions.extract.images) {
-          image = await extractPNG(page, viewport);
-        }
-
-        return {
-          pageNumber: page.pageNumber,
-          viewport: customViewport,
-          annotation,
-          image
-        };
-      })
-    );
-  }
-
-  private disableLogging() {
-    console.log = () => { };
-  }
-
-  private enableLogging() {
-    console.log = this.LOGGER;
-  }
+  return pages;
 }

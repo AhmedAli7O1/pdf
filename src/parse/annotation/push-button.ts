@@ -1,6 +1,6 @@
-import {Annotation} from "./annotation";
-import {IOriginalAnnotation} from "./original-annotation.interface";
-import {PDFPageViewport} from "pdfjs-dist";
+import {Annotation} from './annotation';
+import { IOriginalAnnotation } from './interfaces';
+import {PDFPageViewport} from 'pdfjs-dist';
 
 export class PushButton extends Annotation {
 
