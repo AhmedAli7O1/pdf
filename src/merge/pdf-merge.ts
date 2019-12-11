@@ -3,7 +3,7 @@ import { IMergingPdf, IPdfAppendOpts, RangeType } from './interfaces';
 
 function appendPagesToFile(pdfWriter: any, src: string | Buffer, specificRanges?: number[][]): void {
   if (Buffer.isBuffer(src)) {
-    src = hummus.PDFRStreamForBuffer(src);
+    src = new hummus.PDFRStreamForBuffer(src);
   }
 
   const options: IPdfAppendOpts = {

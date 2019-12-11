@@ -1,22 +1,22 @@
 import hummus from 'hummus';
-import { IDrawingImage, IPageSize } from './interfaces';
+import { IDrawingImage, IPdfPage } from './interfaces';
 import constants from './constants';
 
 const { IS_IMAGE_INDEPENDENT_OF_EXISTING_GRAPHICS_STATE, DEFAULT_PAGE_SIZE } = constants;
 
 function drawImageInPdf(context: any, drawingImage: IDrawingImage): void {
-  const { bottom, left, imgPath, transformation } = drawingImage;
+  const { imgPath, position, transformation } = drawingImage;
   const options = (transformation) ? { transformation } : undefined;
 
-  context.drawImage(bottom, left, imgPath, options);
+  context.drawImage(position.bottom, position.left, imgPath, options);
 }
 
-export function drawAndCreateNewPdf(targetPath: string, drawingImages: IDrawingImage[], pageSize?: IPageSize): void {
+export function drawAndCreatePdf(targetPath: string, drawingImages: IDrawingImage[], pdfPage?: IPdfPage): void {
 
   const pdfWriter = hummus.createWriter(targetPath);
-  const { top, left, width, height } = pageSize || DEFAULT_PAGE_SIZE;
+  const { bottom, left, width, height } = pdfPage || DEFAULT_PAGE_SIZE;
 
-  const page = pdfWriter.createPage(top, left, width, height);
+  const page = pdfWriter.createPage(bottom, left, width, height);
   const context = pdfWriter.startPageContentContext(page);
 
   drawingImages.forEach(drawingImage => drawImageInPdf(context, drawingImage));

@@ -1,19 +1,22 @@
-interface ITransformation {
-  width?: number;
-  height?: number;
+interface IPosition {
+  bottom: number;
+  left: number;
+}
+
+interface ISize {
+  width: number;
+  height: number;
+}
+
+export interface IPdfPage extends IPosition, ISize {
+}
+
+interface ITransformation extends Partial<ISize> {
   proportional?: boolean;
 }
 
 export interface IDrawingImage {
-  bottom: number;
-  left: number;
   imgPath: string;
+  position: IPosition;
   transformation?: ITransformation;
-}
-
-export interface IPageSize {
-  top: number;
-  left: number;
-  width: number;
-  height: number;
 }
