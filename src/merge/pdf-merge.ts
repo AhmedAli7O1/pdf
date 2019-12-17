@@ -15,38 +15,39 @@ function appendPDFPageFromPDFWithAnnotations(pdfWriter: any, srcPath: string, op
   const cpyCxt = pdfWriter.createPDFCopyingContext(srcPath);
   const cpyCxtParser = cpyCxt.getSourceDocumentParser();
 
-  // for each page
-  for (let i = 0; i < cpyCxtParser.getPagesCount(); ++i) {
-    // grab page dictionary
-    const pageDictionary = cpyCxtParser.parsePageDictionary(i);
-    if (!pageDictionary.exists('Annots')) {
-      // no annotation. append as is
-      cpyCxt.appendPDFPageFromPDF(i);
-    }
-    else {
-      // this const here will save any reffed objects from the copied annotations object.
-      // they will be written after the page copy writing as to not to disturb the
-      // page object writing itself.
-      let reffedObjects: any[] = [];
+  // for each page range
+  const pageRangs = options.specificRanges || [[0, cpyCxtParser.getPagesCount()]];
 
-      pdfWriter.getEvents().once('OnPageWrite', (params: any) => {
-        // using the page write event, write the new annotations. just copy the object
-        // as is, saving any referenced objects for future writes
-        params.pageDictionaryContext.writeKey('Annots');
-        reffedObjects = cpyCxt.copyDirectObjectWithDeepCopy(pageDictionary.queryObject('Annots'))
-      });
+  pageRangs.forEach(range => {
+    for (let i = range[0]; i <= range[1]; i++) {
+      const pageDictionary = cpyCxtParser.parsePageDictionary(i);
 
-      // write page. this will trigger the event
-      cpyCxt.appendPDFPageFromPDF(i);
+      if (!pageDictionary.exists('Annots')) { cpyCxt.appendPDFPageFromPDF(i); } // if no annotation just append the page
+      else {
+        // this const here will save any reffed objects from the copied annotations object.
+        // they will be written after the page copy writing as to not to disturb the
+        // page object writing itself.
+        let reffedObjects: any[] = [];
 
-      // now write the reffed object (should be populated cause onPageWrite was written)
-      // note that some or all annotations may be embedded, in which case this array
-      // wont hold all annotation objects
-      if (reffedObjects && reffedObjects.length > 0) {
-        cpyCxt.copyNewObjectsForDirectObject(reffedObjects);
+        pdfWriter.getEvents().once('OnPageWrite', (params: any) => {
+          // using the page write event, write the new annotations. just copy the object
+          // as is, saving any referenced objects for future writes
+          params.pageDictionaryContext.writeKey('Annots');
+          reffedObjects = cpyCxt.copyDirectObjectWithDeepCopy(pageDictionary.queryObject('Annots'))
+        });
+
+        // write page. this will trigger the event
+        cpyCxt.appendPDFPageFromPDF(i);
+
+        // now write the reffed object (should be populated cause onPageWrite was written)
+        // note that some or all annotations may be embedded, in which case this array
+        // wont hold all annotation objects
+        if (reffedObjects && reffedObjects.length > 0) {
+          cpyCxt.copyNewObjectsForDirectObject(reffedObjects);
+        }
       }
     }
-  }
+  });
 }
 
 export function mergePdfs(targetPath: string, mergingPdfs: IMergingPdf[]): string {
