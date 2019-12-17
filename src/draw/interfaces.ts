@@ -15,8 +15,14 @@ interface ITransformation extends Partial<ISize> {
   proportional?: boolean;
 }
 
-export interface IDrawingImage {
+export interface IImageInfo {
   imgPath: string;
   position: IPosition;
   transformation?: ITransformation;
+  pageIndex?: number;
+}
+
+export interface IPageDrawing {
+  images: IImageInfo[];
+  pageIndex?: number;
 }

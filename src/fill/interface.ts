@@ -15,6 +15,6 @@ export interface IFillFormOptions {
     size: number,
     colorspace: string,
     color: number,
-  },
-  debug?: boolean
+  };
+  debug?: boolean;
 }

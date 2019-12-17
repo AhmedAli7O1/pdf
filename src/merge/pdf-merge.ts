@@ -1,17 +1,52 @@
 import hummus from 'hummus';
 import { IMergingPdf, IPdfAppendOpts, RangeType } from './interfaces';
 
-function appendPagesToFile(pdfWriter: any, src: string | Buffer, specificRanges?: number[][]): void {
-  if (Buffer.isBuffer(src)) {
-    src = new hummus.PDFRStreamForBuffer(src);
-  }
-
+function appendPagesToFile(pdfWriter: any, src: string, specificRanges?: number[][]): void {
   const options: IPdfAppendOpts = {
     type: (specificRanges) ? RangeType.SpecificRanges : RangeType.allPages,
     specificRanges
   };
 
-  pdfWriter.appendPDFPagesFromPDF(src, options);
+  // pdfWriter.appendPDFPagesFromPDF(src, options);
+  appendPDFPageFromPDFWithAnnotations(pdfWriter, src, options);
+}
+
+function appendPDFPageFromPDFWithAnnotations(pdfWriter: any, srcPath: string, options: IPdfAppendOpts) {
+  const cpyCxt = pdfWriter.createPDFCopyingContext(srcPath);
+  const cpyCxtParser = cpyCxt.getSourceDocumentParser();
+
+  // for each page
+  for (let i = 0; i < cpyCxtParser.getPagesCount(); ++i) {
+    // grab page dictionary
+    const pageDictionary = cpyCxtParser.parsePageDictionary(i);
+    if (!pageDictionary.exists('Annots')) {
+      // no annotation. append as is
+      cpyCxt.appendPDFPageFromPDF(i);
+    }
+    else {
+      // this const here will save any reffed objects from the copied annotations object.
+      // they will be written after the page copy writing as to not to disturb the
+      // page object writing itself.
+      let reffedObjects: any[] = [];
+
+      pdfWriter.getEvents().once('OnPageWrite', (params: any) => {
+        // using the page write event, write the new annotations. just copy the object
+        // as is, saving any referenced objects for future writes
+        params.pageDictionaryContext.writeKey('Annots');
+        reffedObjects = cpyCxt.copyDirectObjectWithDeepCopy(pageDictionary.queryObject('Annots'))
+      });
+
+      // write page. this will trigger the event
+      cpyCxt.appendPDFPageFromPDF(i);
+
+      // now write the reffed object (should be populated cause onPageWrite was written)
+      // note that some or all annotations may be embedded, in which case this array
+      // wont hold all annotation objects
+      if (reffedObjects && reffedObjects.length > 0) {
+        cpyCxt.copyNewObjectsForDirectObject(reffedObjects);
+      }
+    }
+  }
 }
 
 export function mergePdfs(targetPath: string, mergingPdfs: IMergingPdf[]): string {

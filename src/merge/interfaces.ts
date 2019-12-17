@@ -6,7 +6,7 @@ export enum RangeType {
 }
 
 export interface IMergingPdf {
-  src: string | Buffer;
+  src: string;
   pageRanges?: number[][];
 }
 
