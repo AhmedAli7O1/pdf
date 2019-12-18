@@ -10,11 +10,12 @@ import { mapAnnotations, IOriginalAnnotation, IAnnotation } from './annotation';
 import { IPage, IPageOptions } from './interfaces';
 import { Viewport } from './viewport';
 import { convertPDFPageToPNG } from './images2';
+import hummus from 'hummus';
 
 const writeFile: Function = promisify(fs.writeFile);
 const tmpDir: string = join(tmpdir(), constants.imageMagicTempDir);
 
-const logging: boolean = false;
+const logging: boolean = true;
 const LOGGER = console.log;
 
 try {
@@ -91,4 +92,13 @@ export async function getForms(source: any, pageOptions?: IPageOptions): Promise
   if (!logging) { enableLogging(); }
 
   return pages;
+}
+
+export function getPdfInfo(source: string): { pageCount: number, encrypted: boolean } {
+  const reader = hummus.createReader(source);
+
+  return {
+    pageCount: reader.getPagesCount(),
+    encrypted: reader.isEncrypted()
+  };
 }

@@ -16,10 +16,11 @@ function appendPDFPageFromPDFWithAnnotations(pdfWriter: any, srcPath: string, op
   const cpyCxtParser = cpyCxt.getSourceDocumentParser();
 
   // for each page range
-  const pageRangs = options.specificRanges || [[0, cpyCxtParser.getPagesCount()]];
+  const pageRangs = options.specificRanges || [[0, cpyCxtParser.getPagesCount() - 1]];
 
   pageRangs.forEach(range => {
     for (let i = range[0]; i <= range[1]; i++) {
+
       const pageDictionary = cpyCxtParser.parsePageDictionary(i);
 
       if (!pageDictionary.exists('Annots')) { cpyCxt.appendPDFPageFromPDF(i); } // if no annotation just append the page
@@ -33,7 +34,7 @@ function appendPDFPageFromPDFWithAnnotations(pdfWriter: any, srcPath: string, op
           // using the page write event, write the new annotations. just copy the object
           // as is, saving any referenced objects for future writes
           params.pageDictionaryContext.writeKey('Annots');
-          reffedObjects = cpyCxt.copyDirectObjectWithDeepCopy(pageDictionary.queryObject('Annots'))
+          reffedObjects = cpyCxt.copyDirectObjectWithDeepCopy(pageDictionary.queryObject('Annots'));
         });
 
         // write page. this will trigger the event
