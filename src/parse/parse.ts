@@ -10,7 +10,6 @@ import { mapAnnotations, IOriginalAnnotation, IAnnotation } from './annotation';
 import { IPage, IPageOptions } from './interfaces';
 import { Viewport } from './viewport';
 import { convertPDFPageToPNG } from './images2';
-import hummus from 'hummus';
 
 const writeFile: Function = promisify(fs.writeFile);
 const tmpDir: string = join(tmpdir(), constants.imageMagicTempDir);
@@ -94,11 +93,8 @@ export async function getForms(source: any, pageOptions?: IPageOptions): Promise
   return pages;
 }
 
-export function getPdfInfo(source: string): { pageCount: number, encrypted: boolean } {
-  const reader = hummus.createReader(source);
+export async function getPageCount(source: string): Promise<number> {
+  const page: PDFDocumentProxy = await getDocument(source).promise;
 
-  return {
-    pageCount: reader.getPagesCount(),
-    encrypted: reader.isEncrypted()
-  };
+  return page.numPages;
 }
