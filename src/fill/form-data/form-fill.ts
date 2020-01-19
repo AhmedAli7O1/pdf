@@ -1,8 +1,7 @@
 import hummus from 'hummus';
-import {IFillFormData, IFillFormOptions} from './interface';
+import { IFillFormData, IFillFormOptions } from './interface';
 
 const BUFFER_SIZE = 10000;
-
 
 function readStreamToString(handles: any, stream: any) {
   let buff = '';
@@ -17,11 +16,10 @@ function readStreamToString(handles: any, stream: any) {
   return buff;
 }
 
-
 function getOriginalTextFieldAppearanceStreamCode(handles: any, fieldDictionary: any) {
   // get the single appearance stream for the text, field. we'll use it to recreate the new one
   const appearanceInField = fieldDictionary.exists('Subtype') && (fieldDictionary.queryObject('Subtype')
-  .toString() == 'Widget') || !fieldDictionary.exists('Kids');
+    .toString() === 'Widget') || !fieldDictionary.exists('Kids');
 
   let appearanceParent = null;
 
@@ -37,16 +35,19 @@ function getOriginalTextFieldAppearanceStreamCode(handles: any, fieldDictionary:
     }
   }
 
-  if (!appearanceParent)
+  if (!appearanceParent) {
     return null;
+  }
 
-  if (!appearanceParent.exists('AP'))
+  if (!appearanceParent.exists('AP')) {
     return null;
+  }
 
   const appearance = handles.reader.queryDictionaryObject(appearanceParent, 'AP').toPDFDictionary();
 
-  if (!appearance.exists('N'))
+  if (!appearance.exists('N')) {
     return null;
+  }
 
   const appearanceXObject = handles.reader.queryDictionaryObject(appearance, 'N').toPDFStream();
 
@@ -55,8 +56,8 @@ function getOriginalTextFieldAppearanceStreamCode(handles: any, fieldDictionary:
 
 function writeAppearanceXObjectForText(handles: any, formId: any, fieldsDictionary: any, text: any, inheritedProperties: any) {
   const rect = handles.reader.queryDictionaryObject(fieldsDictionary, 'Rect').toPDFArray().toJSArray();
-  const da = fieldsDictionary.exists('DA') ? fieldsDictionary.queryObject('DA').toString() : inheritedProperties['DA'];
-  const q = fieldsDictionary.exists('Q') ? fieldsDictionary.queryObject('Q').toNumber() : inheritedProperties['Q'];
+  const da = fieldsDictionary.exists('DA') ? fieldsDictionary.queryObject('DA').toString() : inheritedProperties.DA;
+  const q = fieldsDictionary.exists('Q') ? fieldsDictionary.queryObject('Q').toNumber() : inheritedProperties.Q;
 
   if (handles.options.debug) {
     console.debug('creating new appearance with:');
@@ -79,7 +80,7 @@ function writeAppearanceXObjectForText(handles: any, formId: any, fieldsDictiona
       const post = originalAppearanceContent.indexOf('EMC', pre + '/Tx BMC'.length);
 
       if (post !== -1) {
-        after = originalAppearanceContent.substr(post + 'EMC'.length)
+        after = originalAppearanceContent.substr(post + 'EMC'.length);
       }
     } else {
       before = originalAppearanceContent;
@@ -126,28 +127,28 @@ function writeAppearanceXObjectForText(handles: any, formId: any, fieldsDictiona
     }
 
     xObjectForm.getContentContext()
-    .writeFreeCode(before)
-    .writeFreeCode('/Tx BMC\r\n')
-    .q()
-    .writeText(text, xPos, yPos, textOptions)
-    .Q()
-    .writeFreeCode('EMC')
-    .writeFreeCode(after);
+      .writeFreeCode(before)
+      .writeFreeCode('/Tx BMC\r\n')
+      .q()
+      .writeText(text, xPos, yPos, textOptions)
+      .Q()
+      .writeFreeCode('EMC')
+      .writeFreeCode(after);
   }
   else {
     // Naive form, no quad support...and text may not show and may be mispositioned
     xObjectForm.getContentContext()
-    .writeFreeCode(before)
-    .writeFreeCode('/Tx BMC\r\n')
-    .q()
-    .BT()
-    .writeFreeCode(da + '\r\n')
-    .TD(0, 4.5)
-    .Tj(text, {encoding: 'code'})
-    .ET()
-    .Q()
-    .writeFreeCode('EMC')
-    .writeFreeCode(after);
+      .writeFreeCode(before)
+      .writeFreeCode('/Tx BMC\r\n')
+      .q()
+      .BT()
+      .writeFreeCode(da + '\r\n')
+      .TD(0, 4.5)
+      .Tj(text, { encoding: 'code' })
+      .ET()
+      .Q()
+      .writeFreeCode('EMC')
+      .writeFreeCode(after);
   }
 
   // register to copy resources from form default resources dict [would have been better to just refer to it...
@@ -176,21 +177,21 @@ function writeFieldWithAppearanceForText(handles: any, targetFieldDict: any, sou
   if (appearanceInField) {
     // Appearance in field - so write appearance dict in field
     targetFieldDict
-    .writeKey('AP');
+      .writeKey('AP');
 
     const apDict = handles.objectsContext.startDictionary();
 
-    apDict.writeKey("N").writeObjectReferenceValue(newAppearanceFormId);
+    apDict.writeKey('N').writeObjectReferenceValue(newAppearanceFormId);
     handles.objectsContext
-    .endDictionary(apDict)
-    .endDictionary(targetFieldDict)
-    .endIndirectObject();
+      .endDictionary(apDict)
+      .endDictionary(targetFieldDict)
+      .endIndirectObject();
 
   } else {
     // finish the field object
     handles.objectsContext
-    .endDictionary(targetFieldDict)
-    .endIndirectObject();
+      .endDictionary(targetFieldDict)
+      .endIndirectObject();
 
     // write in kid (there should be just one)
     const kidsArray = handles.reader.queryDictionaryObject(sourceFieldDictionary, 'Kids').toPDFArray();
@@ -209,16 +210,16 @@ function writeFieldWithAppearanceForText(handles: any, targetFieldDict: any, sou
       sourceField = fieldReference.field.toPDFDictionary();
     }
 
-    const modifiedDict = startModifiedDictionary(handles, sourceField, {'AP': -1});
+    const modifiedDict = startModifiedDictionary(handles, sourceField, { AP: -1 });
     modifiedDict
-    .writeKey('AP');
+      .writeKey('AP');
 
     const apDict = handles.objectsContext.startDictionary();
-    apDict.writeKey("N").writeObjectReferenceValue(newAppearanceFormId);
+    apDict.writeKey('N').writeObjectReferenceValue(newAppearanceFormId);
     handles.objectsContext
-    .endDictionary(apDict)
-    .endDictionary(modifiedDict)
-    .endIndirectObject();
+      .endDictionary(apDict)
+      .endDictionary(modifiedDict)
+      .endIndirectObject();
   }
 
   // write the new stream xObject
@@ -227,13 +228,13 @@ function writeFieldWithAppearanceForText(handles: any, targetFieldDict: any, sou
 
 function updateChoiceValue(handles: any, fieldDictionary: any, value: any, inheritedProperties: any) {
   const appearanceInField = fieldDictionary.exists('Subtype') && (fieldDictionary.queryObject('Subtype')
-  .toString() == 'Widget') || !fieldDictionary.exists('Kids');
+    .toString() === 'Widget') || !fieldDictionary.exists('Kids');
 
-  const fieldsToRemove: any = {'V': -1};
+  const fieldsToRemove: any = { V: -1 };
 
   if (appearanceInField) {
     // add skipping AP if in field (and not in a child widget)
-    fieldsToRemove['AP'] = -1;
+    fieldsToRemove.AP = -1;
   }
 
   const modifiedDict = startModifiedDictionary(handles, fieldDictionary, fieldsToRemove);
@@ -244,13 +245,13 @@ function updateChoiceValue(handles: any, fieldDictionary: any, value: any, inher
   if (typeof (value) === 'string') {
     // one option
     modifiedDict
-    .writeKey('V')
-    .writeLiteralStringValue(new hummus.PDFTextString(value).toBytesArray());
+      .writeKey('V')
+      .writeLiteralStringValue(new hummus.PDFTextString(value).toBytesArray());
     textToWrite = value;
   } else {
     // multiple options
     modifiedDict
-    .writeKey('V');
+      .writeKey('V');
     handles.objectsContext.startArray();
 
     value.forEach((singleValue: any) => {
@@ -266,51 +267,50 @@ function updateChoiceValue(handles: any, fieldDictionary: any, value: any, inher
 
 function updateTextValue(handles: any, fieldDictionary: any, value: any, isRich: any, inheritedProperties: any) {
   if (typeof (value) === 'string') {
-    value = {v: value, rv: value};
+    value = { v: value, rv: value };
   }
 
   const appearanceInField = fieldDictionary.exists('Subtype') && (fieldDictionary.queryObject('Subtype')
-  .toString() == 'Widget') || !fieldDictionary.exists('Kids');
+    .toString() === 'Widget') || !fieldDictionary.exists('Kids');
 
-  const fieldsToRemove: any = {'V': -1};
+  const fieldsToRemove: any = { V: -1 };
 
   if (appearanceInField) {
     // add skipping AP if in field (and not in a child widget)
-    fieldsToRemove['AP'] = -1;
+    fieldsToRemove.AP = -1;
   }
 
   if (isRich) {
     // skip RV if rich
-    fieldsToRemove['RV'] = -1;
+    fieldsToRemove.RV = -1;
   }
 
   const modifiedDict = startModifiedDictionary(handles, fieldDictionary, fieldsToRemove);
 
   // start with value, setting both plain value and rich value
   modifiedDict
-  .writeKey('V')
-  .writeLiteralStringValue(new hummus.PDFTextString(value['v']).toBytesArray());
+    .writeKey('V')
+    .writeLiteralStringValue(new hummus.PDFTextString(value.v).toBytesArray());
 
   if (isRich) {
     modifiedDict
-    .writeKey('RV')
-    .writeLiteralStringValue(new hummus.PDFTextString(value['rv']).toBytesArray());
+      .writeKey('RV')
+      .writeLiteralStringValue(new hummus.PDFTextString(value.rv).toBytesArray());
   }
 
-  writeFieldWithAppearanceForText(handles, modifiedDict, fieldDictionary, appearanceInField, value['v'], inheritedProperties);
+  writeFieldWithAppearanceForText(handles, modifiedDict, fieldDictionary, appearanceInField, value.v, inheritedProperties);
 }
-
 
 /**
  * Update radio button value. look for the field matching the value, which should be an index.
  * Set its ON appearance as the value, and set all radio buttons appearance to off, but the selected one which should be on
  */
 function updateOptionButtonValue(handles: any, fieldDictionary: any, value: any) {
-  const isWidget = fieldDictionary.exists('Subtype') && (fieldDictionary.queryObject('Subtype').toString() == 'Widget');
+  const isWidget = fieldDictionary.exists('Subtype') && (fieldDictionary.queryObject('Subtype').toString() === 'Widget');
 
   if (isWidget || !fieldDictionary.exists('Kids')) {
     // this radio button has just one option and its in the widget. also means no kids
-    const modifiedDict = startModifiedDictionary(handles, fieldDictionary, {'V': -1, 'AS': -1});
+    const modifiedDict = startModifiedDictionary(handles, fieldDictionary, { V: -1, AS: -1 });
 
     let appearanceName;
 
@@ -328,17 +328,17 @@ function updateOptionButtonValue(handles: any, fieldDictionary: any, value: any)
     }
 
     modifiedDict
-    .writeKey('V')
-    .writeNameValue(appearanceName)
-    .writeKey('AS')
-    .writeNameValue(appearanceName);
+      .writeKey('V')
+      .writeNameValue(appearanceName)
+      .writeKey('AS')
+      .writeNameValue(appearanceName);
 
     handles.objectsContext
-    .endDictionary(modifiedDict)
-    .endIndirectObject();
+      .endDictionary(modifiedDict)
+      .endIndirectObject();
   } else {
     // Field. this would mean that there's a kid array, and there are offs and ons to set
-    const modifiedDict = startModifiedDictionary(handles, fieldDictionary, {'V': -1, 'Kids': -1});
+    const modifiedDict = startModifiedDictionary(handles, fieldDictionary, { V: -1, Kids: -1 });
     const kidsArray = handles.reader.queryDictionaryObject(fieldDictionary, 'Kids').toPDFArray();
 
     let appearanceName;
@@ -359,8 +359,8 @@ function updateOptionButtonValue(handles: any, fieldDictionary: any, value: any)
 
     // set the V value on the new field dictionary
     modifiedDict
-    .writeKey('V')
-    .writeNameValue(appearanceName);
+      .writeKey('V')
+      .writeNameValue(appearanceName);
 
     // write the Kids key before we write the kids array
     modifiedDict.writeKey('Kids');
@@ -381,24 +381,24 @@ function updateOptionButtonValue(handles: any, fieldDictionary: any, value: any)
         sourceField = fieldReference.field.toPDFDictionary();
       }
 
-      const modifiedFieldDict = startModifiedDictionary(handles, sourceField, {'AS': -1});
+      const modifiedFieldDict = startModifiedDictionary(handles, sourceField, { AS: -1 });
 
       if (value === i) {
         // this widget should be on
         modifiedFieldDict
-        .writeKey('AS')
-        .writeNameValue(appearanceName);  // note that we have saved it earlier
+          .writeKey('AS')
+          .writeNameValue(appearanceName);  // note that we have saved it earlier
       } else {
         // this widget should be off
         modifiedFieldDict
-        .writeKey('AS')
-        .writeNameValue('Off');
+          .writeKey('AS')
+          .writeNameValue('Off');
 
       }
       // finish
       handles.objectsContext
-      .endDictionary(modifiedFieldDict)
-      .endIndirectObject();
+        .endDictionary(modifiedFieldDict)
+        .endIndirectObject();
     }
   }
 }
@@ -406,15 +406,15 @@ function updateOptionButtonValue(handles: any, fieldDictionary: any, value: any)
 function defaultTerminalFieldWrite(handles: any, fieldDictionary: any) {
   // default write of ending field. no reason to recurse to kids
   handles.copyingContext
-  .copyDirectObjectAsIs(fieldDictionary)
-  .endIndirectObject();
+    .copyDirectObjectAsIs(fieldDictionary)
+    .endIndirectObject();
 }
 
 function writeFieldAndKids(handles: any, fieldDictionary: any, inheritedProperties: any, baseFieldName: any) {
   // this field or widget doesn't need value rewrite. but its kids might. so write the dictionary as is, dropping kids.
   // write them later and recurse.
 
-  const modifiedFieldDict = startModifiedDictionary(handles, fieldDictionary, {'Kids': -1});
+  const modifiedFieldDict = startModifiedDictionary(handles, fieldDictionary, { Kids: -1 });
 
   // if kids exist, continue to them for extra filling!
   const kids = fieldDictionary.exists('Kids') ?
@@ -424,16 +424,21 @@ function writeFieldAndKids(handles: any, fieldDictionary: any, inheritedProperti
     const localEnv: any = {};
 
     // prep some inherited values and push env
-    if (fieldDictionary.exists('FT'))
-      localEnv['FT'] = fieldDictionary.queryObject('FT').toString();
-    if (fieldDictionary.exists('Ff'))
-      localEnv['Ff'] = fieldDictionary.queryObject('Ff').toNumber();
-    if (fieldDictionary.exists('DA'))
-      localEnv['DA'] = fieldDictionary.queryObject('DA').toString();
-    if (fieldDictionary.exists('Q'))
-      localEnv['Q'] = fieldDictionary.queryObject('Q').toNumber();
-    if (fieldDictionary.exists('Opt'))
-      localEnv['Opt'] = fieldDictionary.queryObject('Opt').toPDFArray();
+    if (fieldDictionary.exists('FT')) {
+      localEnv.FT = fieldDictionary.queryObject('FT').toString();
+    }
+    if (fieldDictionary.exists('Ff')) {
+      localEnv.Ff = fieldDictionary.queryObject('Ff').toNumber();
+    }
+    if (fieldDictionary.exists('DA')) {
+      localEnv.DA = fieldDictionary.queryObject('DA').toString();
+    }
+    if (fieldDictionary.exists('Q')) {
+      localEnv.Q = fieldDictionary.queryObject('Q').toNumber();
+    }
+    if (fieldDictionary.exists('Opt')) {
+      localEnv.Opt = fieldDictionary.queryObject('Opt').toPDFArray();
+    }
 
     modifiedFieldDict.writeKey('Kids');
 
@@ -442,8 +447,8 @@ function writeFieldAndKids(handles: any, fieldDictionary: any, inheritedProperti
   } else {
     // no kids, can finish object now
     handles.objectsContext
-    .endDictionary(modifiedFieldDict)
-    .endIndirectObject();
+      .endDictionary(modifiedFieldDict)
+      .endIndirectObject();
   }
 }
 
@@ -456,9 +461,9 @@ function updateFieldWithValue(handles: any, fieldDictionary: any, value: any, in
   // Widget data or that it has one or more kids defining its widget annotation(s). Normally it would be
   // One but in the case of a radio button, where there's one per option.
   const localFieldType = fieldDictionary.exists('FT') ? fieldDictionary.queryObject('FT').toString() : undefined;
-  const fieldType = localFieldType || inheritedProperties['FT'];
+  const fieldType = localFieldType || inheritedProperties.FT;
   const localFlags = fieldDictionary.exists('Ff') ? fieldDictionary.queryObject('Ff').toNumber() : undefined;
-  const flags = localFlags === undefined ? inheritedProperties['Ff'] : localFlags;
+  const flags = localFlags === undefined ? inheritedProperties.Ff : localFlags;
 
   // the rest is fairly type dependent, so let's check the type
   switch (fieldType) {
@@ -537,20 +542,20 @@ function writeKidsAndEndObject(handles: any, parentDict: any, kidsArray: any) {
     if (field.getType() === hummus.ePDFObjectIndirectObjectReference) {
       // existing reference, keep as is
       handles.copyingContext.copyDirectObjectAsIs(field);
-      fieldsReferences.push({existing: true, id: field.toPDFIndirectObjectReference().getObjectID()});
+      fieldsReferences.push({ existing: true, id: field.toPDFIndirectObjectReference().getObjectID() });
     } else {
       const newFieldObjectId = handles.objectsContext.allocateNewObjectID();
 
       // direct object, recreate as reference
-      fieldsReferences.push({existing: false, id: newFieldObjectId, theObject: field});
+      fieldsReferences.push({ existing: false, id: newFieldObjectId, theObject: field });
       handles.copyingContext.writeIndirectObjectReference(newFieldObjectId);
     }
   });
 
   handles.objectsContext
-  .endArray(hummus.eTokenSeparatorEndLine)
-  .endDictionary(parentDict)
-  .endIndirectObject();
+    .endArray(hummus.eTokenSeparatorEndLine)
+    .endDictionary(parentDict)
+    .endIndirectObject();
 
   return fieldsReferences;
 }
@@ -583,12 +588,12 @@ function startModifiedDictionary(handles: any, originalDict: any, excludedKeys: 
   const newDict = handles.objectsContext.startDictionary();
 
   Object.getOwnPropertyNames(originalDictJs)
-  .forEach((element) => {
-    if (!excludedKeys[element]) {
-      newDict.writeKey(element);
-      handles.copyingContext.copyDirectObjectAsIs(originalDictJs[element]);
-    }
-  });
+    .forEach((element) => {
+      if (!excludedKeys[element]) {
+        newDict.writeKey(element);
+        handles.copyingContext.copyDirectObjectAsIs(originalDictJs[element]);
+      }
+    });
 
   return newDict;
 }
@@ -598,7 +603,7 @@ function startModifiedDictionary(handles: any, originalDict: any, excludedKeys: 
  * assumes in an indirect object, so will finish it
  */
 function writeFilledForm(handles: any, acrobatFormDict: any) {
-  const modifiedAcrobatFormDict = startModifiedDictionary(handles, acrobatFormDict, {'Fields': -1});
+  const modifiedAcrobatFormDict = startModifiedDictionary(handles, acrobatFormDict, { Fields: -1 });
 
   const fields = acrobatFormDict.exists('Fields') ?
     handles.reader.queryDictionaryObject(acrobatFormDict, 'Fields').toPDFArray() : null;
@@ -610,15 +615,13 @@ function writeFilledForm(handles: any, acrobatFormDict: any) {
     writeFilledFields(handles, modifiedAcrobatFormDict, fields, {}, '');
   } else {
     handles
-    .objectsContext.endDictionary(modifiedAcrobatFormDict)
-    .objectsContext.endIndirectObject();
+      .objectsContext.endDictionary(modifiedAcrobatFormDict)
+      .objectsContext.endIndirectObject();
   }
 }
 
-export function fillForm(filePath: string, data: IFillFormData, options?: IFillFormOptions) {
-
-  // create a writer stream to modify the file in place
-  const writer = hummus.createWriterToModify(filePath);
+export function fillForm(writer: any, data: IFillFormData, options?: IFillFormOptions) {
+  console.log('called here inside fill form');
 
   // optionally setup font
   if (options && options.defaultTextOptions) {
@@ -634,7 +637,7 @@ export function fillForm(filePath: string, data: IFillFormData, options?: IFillF
   // get Acrobat Form Object
   const acrobatFormCatalog = catalogDict.exists('AcroForm') ? catalogDict.queryObject('AcroForm') : null;
 
-  if (!acrobatFormCatalog) throw new Error('form not found!');
+  if (!acrobatFormCatalog) { throw new Error('form not found!'); }
 
   // setup copying context, and keep reference to objects context as well
   const copyingContext = writer.createPDFCopyingContextForModifiedFile();
@@ -669,20 +672,18 @@ export function fillForm(filePath: string, data: IFillFormData, options?: IFillF
 
     // recreate the catalog with form pointing to new reference
     objectsContext.startModifiedIndirectObject(catalogObjectId);
-    const modifiedCatalogDictionary = startModifiedDictionary(handles, catalogDict, {'AcroForm': -1});
+    const modifiedCatalogDictionary = startModifiedDictionary(handles, catalogDict, { AcroForm: -1 });
 
     modifiedCatalogDictionary.writeKey('AcroForm');
     modifiedCatalogDictionary.writeObjectReferenceValue(newAcrobatFormObjectId);
 
     objectsContext
-    .endDictionary(modifiedCatalogDictionary)
-    .endIndirectObject();
+      .endDictionary(modifiedCatalogDictionary)
+      .endIndirectObject();
 
     // now create the new form object
     objectsContext.startNewIndirectObject(newAcrobatFormObjectId);
 
     writeFilledForm(handles, acroformDict);
   }
-
-  writer.end();
 }
